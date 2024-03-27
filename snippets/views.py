@@ -180,14 +180,15 @@ class SnippetList(generics.ListCreateAPIView):
     
     
     def perform_create(self, serializer):
+        print(self.request.data)
+        print(type(self.request.data))
         serializer.save(owner=self.request.user)
-        print(serializer.data)
     
 class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer    
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, permissions.IsAdminUser]
     
     
 
@@ -195,6 +196,7 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer    
+    permission_classes = [permissions.IsAdminUser,]
     
     
 
