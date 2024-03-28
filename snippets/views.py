@@ -169,23 +169,56 @@ from snippets.permissions import IsOwnerOrReadOnly
 from django.contrib.auth import logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-class SnippetList(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self):
-        """
-        Optionally, apply filters or modifications to the queryset based on self.request or other conditions.
-        """
 
-        return Snippet.objects.all()  # Directly return the queryset
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'snippets': reverse('snippet-list', request=request, format=format)
+    })
+
+from rest_framework import permissions
+from rest_framework import renderers
+from rest_framework.decorators import action
+
+from rest_framework import viewsets
+
+# class SnippetList(generics.ListCreateAPIView):
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+#     def get_queryset(self):
+#         """
+#         Optionally, apply filters or modifications to the queryset based on self.request or other conditions.
+#         """
+
+#         return Snippet.objects.all()  # Directly return the queryset
+#     serializer_class = SnippetSerializer
+    
+    
+#     def perform_create(self, serializer):
+#         print(self.request.data)
+#         print(type(self.request.data))
+#         serializer.save(owner=self.request.user)
+class SnippetViewSet(viewsets.ModelViewSet):
+    """
+    This ViewSet automatically provides `list`, `create`, `retrieve`,
+    `update` and `destroy` actions.
+
+    Additionally we also provide an extra `highlight` action.
+    """
+    queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
-    
-    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsOwnerOrReadOnly]
+
     def perform_create(self, serializer):
-        print(self.request.data)
-        print(type(self.request.data))
         serializer.save(owner=self.request.user)
     
 class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -210,13 +243,23 @@ class APILogoutView(APIView):
         # Inform the client to remove the token from storage
         return Response({"detail": "Successfully logged out. "}, status=status.HTTP_200_OK)
 
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer    
-    permission_classes = [permissions.IsAdminUser,]
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer    
+#     permission_classes = [permissions.IsAdminUser,]
     
-    
+#     def list(self, request):    
+#         queryset = self.get_queryset()
+#         serializer = UserSerializer(queryset, many=True)
+        
+#         return Response(serializer.data)    
 
-class UserDetail(generics.RetrieveAPIView):
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer    
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    This viewset automatically provides `list` and `retrieve` actions.
+    """
     queryset = User.objects.all()
-    serializer_class = UserSerializer    
+    serializer_class = UserSerializer
